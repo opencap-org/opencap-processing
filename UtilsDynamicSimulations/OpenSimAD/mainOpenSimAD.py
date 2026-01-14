@@ -1702,8 +1702,22 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
                             (ca.sum1(Tk[idx_vGRF_front[side]])) /
                             (ca.sum1(Tk[idx_vGRF_rear[side]])))
                         J += (weights['vGRFRatioTerm'] * 
-                              (vGRF_ratio) * h * B[j + 1])                 
-             
+                              (vGRF_ratio) * h * B[j + 1]) 
+
+                # TODO_footVelocity make foot y velocity 0 clean and move things the right place
+                # should compute velocity in F.cpp (body linear velocity)
+                # also pre-compute all this stuff appropriately above
+                # also probably don't assume 0 velocity at all times
+                if k==0 and j== 0:
+                    idx_calcn_l = Fmap['body_origins']['calcn_l']
+                    idx_calcn_r = Fmap['body_origins']['calcn_r']
+                    calcn_y_l_old = Tk[idx_calcn_l+1]
+                    calcn_y_r_old = Tk[idx_calcn_r+1]
+                    weights['calcnVelocityTerm'] = 100
+                calcn_vel = ca.sqr(Tk[idx_calcn_l] - calcn_y_l_old) + ca.sqr(Tk[idx_calcn_r] - calcn_y_r_old)
+                J += (weights['calcnVelocityTerm'] * 
+                      calcn_vel * h * B[j + 1]) 
+
             # Note: we only impose the following constraints at the mesh
             # points. To be fully consistent with an orthogonal radau
             # collocation scheme, we should impose them at the collocation
@@ -2274,6 +2288,10 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
             reserveActuatorTerm_opt_all = 0
         if min_ratio_vGRF and weights['vGRFRatioTerm'] > 0:
             vGRFRatioTerm_opt_all = 0
+        #TODO_footVelocity
+        if weights['footVelocityTerm'] > 0:
+            footVelTerm_opt_all = 0
+        calcnVelTerm_opt_all = 0
         if not torque_driven_model:
             pMT_opt = np.zeros((len(muscleDrivenJoints), N))
             aMT_opt = np.zeros((len(muscleDrivenJoints), N))
@@ -2417,7 +2435,12 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
                         for idx_rear_sphere in idx_rear_spheres:
                             vGRF_rear_opt += GRF_s_opt[side][contactSpheres[side][idx_rear_sphere]][1,k]
                         vGRF_ratio_opt = np.sqrt(vGRF_front_opt/vGRF_rear_opt) 
-                        vGRFRatioTerm_opt_all += (weights['vGRFRatioTerm'] * vGRF_ratio_opt * h * B[j + 1])                    
+                        vGRFRatioTerm_opt_all += (weights['vGRFRatioTerm'] * vGRF_ratio_opt * h * B[j + 1])
+                # TODO_footVelocity clean this
+                if weights['calcnVelocityTerm'] > 0:
+                    calcn_vel = ca.sqr(Tk[idx_calcn_l] - calcn_y_l_old) + ca.sqr(Tk[idx_calcn_r] - calcn_y_r_old)
+                    calcnVelTerm_opt_all += (weights['calcnVelocityTerm'] * 
+                        calcn_vel * h * B[j + 1]) 
                 
         # "Motor control" terms.
         if torque_driven_model:
@@ -2435,6 +2458,10 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
             JMotor_opt += vGRFRatioTerm_opt_all
         if withReserveActuators:    
             JMotor_opt += reserveActuatorTerm_opt_all
+        # TODO_footVelocity
+        if weights['calcnVelocityTerm'] > 0:
+            JMotor_opt += calcnVelTerm_opt_all
+
         # Tracking terms.
         JTrack_opt = (positionTrackingTerm_opt_all.full() +  
                       velocityTrackingTerm_opt_all.full())
@@ -2496,6 +2523,10 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
         if trackQdds:
             print("\tAcceleration tracking: {}%".format(np.round(JTerms["accelerationTerm_sc"] * 100, 2)))           
         print("\nNumber of iterations: {}\n".format(stats["iter_count"]))
+
+        #TODO_footVelocity
+        if weights['calcnVelocityTerm'] > 0:
+            print("\tCalcaneus velocity: {}%".format(np.round((calcnVelTerm_opt_all / JAll_opt[0][0]) * 100, 2)))
             
         # %% Compute knee adduction moments.
         if computeKAM:            
