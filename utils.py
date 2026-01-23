@@ -587,7 +587,7 @@ def get_calibration(session_id,session_path):
 def download_and_switch_calibration(session_id,session_path,calibTrialID = None):
     if calibTrialID == None:
         calibTrialID = get_calibration_trial_id(session_id)
-    resp = requests.get("https://api.opencap.ai/trials/{}/".format(calibTrialID),
+    resp = requests.get("{}trials/{}/".format(API_URL, calibTrialID),
                          headers = {"Authorization": "Token {}".format(API_TOKEN)})
     trial = resp.json()
        
