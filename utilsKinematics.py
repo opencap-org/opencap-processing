@@ -46,18 +46,50 @@ class kinematics:
         opensim.Logger.setLevelString('error')
         
         modelBasePath = os.path.join(sessionDir, 'OpenSimData', 'Model')
+        
+        # Check if this is a mono session (models stored in trial subfolders)
+        # Check specifically for a subfolder matching the trial name
+        isMono = False
+        if os.path.exists(modelBasePath):
+            trialModelPath = os.path.join(modelBasePath, trialName)
+            if os.path.isdir(trialModelPath):
+                isMono = True
+        
         # Load model if specified, otherwise load the one that was on server
         if modelName is None:
-            modelName = utils.get_model_name_from_metadata(sessionDir)
-            modelPath = os.path.join(modelBasePath,modelName)
+            if isMono:
+                # For mono sessions, look in the trial subfolder
+                trialModelPath = os.path.join(modelBasePath, trialName)
+                if os.path.exists(trialModelPath):
+                    # Find .osim file in the trial subfolder
+                    osimFiles = [f for f in os.listdir(trialModelPath) if f.endswith('.osim')]
+                    if osimFiles:
+                        modelPath = os.path.join(trialModelPath, osimFiles[0])
+                    else:
+                        raise Exception('No .osim file found in ' + trialModelPath)
+                else:
+                    raise Exception('Trial model folder does not exist: ' + trialModelPath)
+            else:
+                modelName = utils.get_model_name_from_metadata(sessionDir)
+                modelPath = os.path.join(modelBasePath, modelName)
         else:
-            modelPath = os.path.join(modelBasePath,
-                                 '{}.osim'.format(modelName))
+            if isMono:
+                # For mono sessions, look in the trial subfolder
+                trialModelPath = os.path.join(modelBasePath, trialName)
+                if not modelName.endswith('.osim'):
+                    modelName = modelName + '.osim'
+                modelPath = os.path.join(trialModelPath, modelName)
+            else:
+                if not modelName.endswith('.osim'):
+                    modelPath = os.path.join(modelBasePath, '{}.osim'.format(modelName))
+                else:
+                    modelPath = os.path.join(modelBasePath, modelName)
             
         # make sure model exists
         if not os.path.exists(modelPath):
             raise Exception('Model path: ' + modelPath + ' does not exist.')
 
+        self.modelPath = modelPath
         self.model = opensim.Model(modelPath)
         self.model.initSystem()
         
