@@ -19,7 +19,11 @@
 """
  
 import sys
-sys.path.append('../')
+import os
+# Add project root to path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 import numpy as np
 import copy
@@ -1047,4 +1051,3 @@ class gait_analysis(kinematics):
                       'ipsilateralLeg':leg}
         
         return gaitEvents
-    

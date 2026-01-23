@@ -32,6 +32,13 @@ from utilsTRC import trc_2_dict
 import numpy as np
 from scipy.spatial.transform import Rotation
 
+# Import marker name mapping for conversion
+try:
+    from marker_name_mapping import REVERSE_MARKER_NAME_MAPPING
+except ImportError:
+    # If mapping file doesn't exist, use empty dict (no conversion)
+    REVERSE_MARKER_NAME_MAPPING = {}
+
 
 class kinematics:
     
@@ -207,6 +214,25 @@ class kinematics:
                                    '{}.trc'.format(trial_name))
         
         markerDict = trc_2_dict(trcFilePath)
+        
+        # Convert marker names from actual format to expected format (with _study suffix)
+        if REVERSE_MARKER_NAME_MAPPING:
+            converted_markers = {}
+            # First pass: add markers that are already in correct format (prioritize these)
+            for marker_name, marker_data in markerDict['markers'].items():
+                if marker_name not in REVERSE_MARKER_NAME_MAPPING:
+                    # Already in correct format or unknown marker - keep as-is
+                    converted_markers[marker_name] = marker_data
+            # Second pass: convert markers that need renaming (only if target doesn't exist)
+            for marker_name, marker_data in markerDict['markers'].items():
+                if marker_name in REVERSE_MARKER_NAME_MAPPING:
+                    new_name = REVERSE_MARKER_NAME_MAPPING[marker_name]
+                    # Only convert if the target name doesn't already exist
+                    # (avoids overwriting markers already in correct format)
+                    if new_name not in converted_markers:
+                        converted_markers[new_name] = marker_data
+            markerDict['markers'] = converted_markers
+        
         if lowpass_cutoff_frequency > 0:
             markerDict['markers'] = {
                 marker_name: lowPassFilter(self.time, data, lowpass_cutoff_frequency) 
