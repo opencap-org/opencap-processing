@@ -291,7 +291,7 @@ def download_kinematics(session_id, folder=None, trialNames=None):
     isMono = sessionJson['isMono']
     
     if not isMono:
-        # Model and metadata.
+        # Model and metadata from neutral trial
         neutral_id = get_neutral_trial_id(session_id)
         get_motion_data(neutral_id, folder)
         modelName = get_model_and_metadata(session_id, folder)
@@ -304,7 +304,18 @@ def download_kinematics(session_id, folder=None, trialNames=None):
         [print(t + ' not in session trial names.') 
          for t in trialNames if t not in sessionTrialNames]
     
-    # Motion data.
+    # Get dynamic trial IDs
+    dynamic_ids = [t['id'] for t in sessionJson['trials'] if (t['name'] != 'calibration' and t['name'] !='neutral')]
+    
+    # Metadata for mono session
+    if isMono:
+        # Get metadata from the first dynamic trial
+        if dynamic_ids:
+            first_trial = get_trial_json(dynamic_ids[0])
+            resultTags = [res['tag'] for res in first_trial['results']]
+            get_metadata(folder, first_trial, resultTags)
+    
+    # Motion data for all dynamic trials
     loadedTrialNames = []
     for trialDict in sessionJson['trials']:
         if trialNames is not None and trialDict['name'] not in trialNames:
@@ -315,8 +326,25 @@ def download_kinematics(session_id, folder=None, trialNames=None):
         
     # Remove 'calibration' and 'neutral' from loadedTrialNames.    
     loadedTrialNames = [i for i in loadedTrialNames if i!='neutral' and i!='calibration']
-        
+    
     # Geometries.
+    if isMono:
+        # For mono sessions, find model names in subfolders
+        modelDir = os.path.join(folder, 'OpenSimData', 'Model')
+        if os.path.exists(modelDir):
+            modelNames = []
+            for subfolder in os.listdir(modelDir):
+                subfolderPath = os.path.join(modelDir, subfolder)
+                if os.path.isdir(subfolderPath):
+                    modelNames.extend([f for f in os.listdir(subfolderPath) if f.endswith('.osim')])
+            if modelNames:
+                # Use first model name found (assuming same model type for all trials)
+                modelName = modelNames[0].replace('.osim', '')
+            else:
+                raise ValueError("No model files found in mono session subfolders")
+        else:
+            raise ValueError("Model directory does not exist")
+    
     get_geometries(folder, modelName=modelName)
         
     return loadedTrialNames, modelName
