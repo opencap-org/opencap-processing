@@ -349,6 +349,12 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
     pathSubjectData = os.path.join(dataDir, subject)
     pathOSData = os.path.join(pathSubjectData, 'OpenSimData')
     pathModelFolder = os.path.join(pathOSData, 'Model')
+    
+    # If trial_name is provided, check for trial-specific model folder
+    trial_model_folder = os.path.join(pathModelFolder, trialName)
+    if os.path.exists(trial_model_folder): # only if is a mono session
+        pathModelFolder = trial_model_folder
+    
     pathModelFile = os.path.join(pathModelFolder, model_full_name + ".osim")
     pathExternalFunctionFolder = os.path.join(pathModelFolder,
                                               'ExternalFunction')

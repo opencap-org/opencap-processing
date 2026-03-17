@@ -228,11 +228,17 @@ def segment_STS(ikFilePath, pelvis_ty=None, timeVec=None, velSeated=0.3,
 # modelAdjustment.log.
 def adjust_muscle_wrapping(
         baseDir, dataDir, subject, OpenSimModel="LaiUhlrich2022",
-        overwrite=False):
+        overwrite=False, trial_name=None):
     
     # Paths
     osDir = os.path.join(dataDir, subject, 'OpenSimData')
     pathModelFolder = os.path.join(osDir, 'Model')
+    
+    # If trial_name is provided, check for trial-specific model folder
+    if trial_name is not None:
+        trial_model_folder = os.path.join(pathModelFolder, trial_name)
+        if os.path.exists(trial_model_folder): # will only be true if is a mono session
+            pathModelFolder = trial_model_folder
     
     # We changed the OpenSim model name after some time:
     # from LaiArnoldModified2017_poly_withArms_weldHand to LaiUhlrich2022.
@@ -503,11 +509,19 @@ def getMomentArms(model, poses, muscleName, coordinateForMomentArm):
 # %% Generate model with contacts.
 def generate_model_with_contacts(
         dataDir, subject, OpenSimModel="LaiUhlrich2022", 
-        setPatellaMasstoZero=True, contact_side=None, overwrite=False):
+        setPatellaMasstoZero=True, contact_side=None, overwrite=False,
+        trial_name=None):
     
     # %% Process settings.
     osDir = os.path.join(dataDir, subject, 'OpenSimData')
     pathModelFolder = os.path.join(osDir, 'Model')
+    
+    # If trial_name is provided, check for trial-specific model folder
+    if trial_name is not None:
+        trial_model_folder = os.path.join(pathModelFolder, trial_name)
+        if os.path.exists(trial_model_folder): # only if is a mono session
+            pathModelFolder = trial_model_folder
+    
     suffix_MA = '_adjusted'
     outputModelFileName = (OpenSimModel + "_scaled" + suffix_MA)
     pathOutputFiles = os.path.join(pathModelFolder, outputModelFileName)    

@@ -531,12 +531,19 @@ def generateExternalFunction(
         OpenSimModel="LaiUhlrich2022",
         treadmill=False, build_externalFunction=True, verifyID=True, 
         externalFunctionName='F', overwrite=False,
-        useExpressionGraphFunction=True, contact_side='all'):
+        useExpressionGraphFunction=True, contact_side='all',trial_name=None):
 
     # %% Process settings.
     pathCWD = os.getcwd()
     osDir = os.path.join(dataDir, subject, 'OpenSimData')
     pathModelFolder = os.path.join(osDir, 'Model')
+    
+    # If trial_name is provided, check for trial-specific model folder
+    if trial_name is not None:
+        trial_model_folder = os.path.join(pathModelFolder, trial_name)
+        if os.path.exists(trial_model_folder): # only if is a mono session
+            pathModelFolder = trial_model_folder
+    
     suffix_MA = '_adjusted'
     if contact_side != 'all':
         suffix_model = '_contacts_' + contact_side
@@ -2312,18 +2319,21 @@ def processInputsOpenSimAD(baseDir, dataFolder, session_id, trial_name,
     # Prepare inputs for dynamic simulations.
     # Adjust muscle wrapping.    
     adjust_muscle_wrapping(baseDir, dataFolder, session_id,
-                         OpenSimModel=OpenSimModel, overwrite=overwrite)
+                         OpenSimModel=OpenSimModel, overwrite=overwrite, 
+                         trial_name=trial_name)
     # Add foot-ground contacts to musculoskeletal model.    
     generate_model_with_contacts(dataFolder, session_id,
                               OpenSimModel=OpenSimModel, overwrite=overwrite,
-                              contact_side=contact_side)
+                              contact_side=contact_side,
+                              trial_name=trial_name)
     # Generate external function.    
     generateExternalFunction(baseDir, dataFolder, session_id,
                              OpenSimModel=OpenSimModel,
                              overwrite=overwrite, 
                              treadmill=bool(treadmill_speed),
                              contact_side=contact_side,
-                             useExpressionGraphFunction=useExpressionGraphFunction)
+                             useExpressionGraphFunction=useExpressionGraphFunction,
+                             trial_name=trial_name)
     
     # Get settings.
     settings = get_setup(motion_type)
