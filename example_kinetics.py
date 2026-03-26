@@ -109,19 +109,24 @@ Please contact us for any questions: https://www.opencap.ai/#contact
 # Select which example you would like to run.
 session_type = 'overground' # Options are 'overground' and 'treadmill'.
 session_id = "4d5c3eb1-1a59-4ea1-9178-d3634610561c"
+# session_id = "e742eb1c-efbc-4c17-befc-a772150ca84d"
 case = '0' # Change this to compare across settings.
 # Options are 'squat', 'STS', and 'jump'.
 if session_type == 'overground': 
-    trial_name = 'STS'
+    trial_name = 'squat'
     if trial_name == 'squat': # Squat
         motion_type = 'squats'
-        repetition = 1
+        repetition = 0
     elif trial_name == 'STS': # Sit-to-stand        
         motion_type = 'sit_to_stand'
         repetition = 1
     elif trial_name == 'jump': # Jump  
         motion_type = 'jumping'
         time_window = [1.3, 2.2]
+    elif trial_name == 'SLDJ_L2': # Jump  
+        motion_type = 'drop_jump_knee_adduction'
+        time_window = [2.7, 3.7]
+        contact_side = 'left'
 # Options are 'walk_1_25ms', 'run_2_5ms', and 'run_4ms'.
 elif session_type == 'treadmill': 
     trial_name = 'walk_1_25ms'
@@ -167,10 +172,13 @@ settings = processInputsOpenSimAD(baseDir, dataFolder, session_id, trial_name,
                                   motion_type, time_window, repetition,
                                   treadmill_speed, contact_side)
 
+if case == '1':
+    settings['meshDensity'] = 100
+
 # %% Simulation.
 run_tracking(baseDir, dataFolder, session_id, settings, case=case, 
               solveProblem=solveProblem, analyzeResults=analyzeResults)
 
 # %% Plots.
 # To compare different cases, add to the cases list, eg cases=['0','1'].
-plotResultsOpenSimAD(dataFolder, session_id, trial_name, settings, cases=[case])
+plotResultsOpenSimAD(dataFolder, session_id, trial_name, settings, cases=[case], mainPlots=False)

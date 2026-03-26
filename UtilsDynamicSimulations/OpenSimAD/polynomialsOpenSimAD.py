@@ -31,7 +31,7 @@ class polynomials:
         self.dimension = dimension
         self.order = order
         
-        nq = [0, 0, 0, 0, 0]
+        nq = [0, 0, 0, 0, 0, 0]
         NCoeff = 0
         for nq[0] in range(order + 1):
             if (dimension < 2):
@@ -54,14 +54,19 @@ class polynomials:
                         else:
                             nq5_s = order - nq[0] - nq[1] - nq[2] - nq[3]
                         for nq[4] in range(nq5_s + 1):
-                            NCoeff += 1
+                            if (dimension < 6):
+                                nq6_s = 0
+                            else:
+                                nq6_s = order - nq[0] - nq[1] - nq[2] - nq[3] - nq[4]
+                            for nq[5] in range(nq6_s + 1):
+                                NCoeff += 1
         
         if len(coefficients) != NCoeff:
             raise Exception('Expected: {}'.format(NCoeff), 'coefficients', 
                             'but got: {}'.format(len(coefficients)))
             
     def calcValue(self, x):        
-        nq = [0, 0, 0, 0, 0]
+        nq = [0, 0, 0, 0, 0, 0]
         coeff_nr = 0
         value = 0
         for nq[0] in range(self.order + 1):
@@ -84,17 +89,22 @@ class polynomials:
                             nq5_s = 0
                         else:
                             nq5_s = self.order - nq[0] - nq[1] - nq[2] - nq[3]
-                        for nq[4] in range(nq5_s + 1):                        
-                            valueP = 1
-                            for d in range(self.dimension):
-                                valueP *= pow(x[d], nq[d])                            
-                            value += valueP * self.coefficients[coeff_nr]
-                            coeff_nr += 1
+                        for nq[4] in range(nq5_s + 1):
+                            if (self.dimension < 6):
+                                nq6_s = 0
+                            else:
+                                nq6_s = self.order - nq[0] - nq[1] - nq[2] - nq[3] - nq[4]
+                            for nq[5] in range(nq6_s + 1):                  
+                                valueP = 1
+                                for d in range(self.dimension):
+                                    valueP *= pow(x[d], nq[d])                            
+                                value += valueP * self.coefficients[coeff_nr]
+                                coeff_nr += 1
                         
         return value
     
     def calcDerivative(self, x, derivComponent):
-        nq = [0, 0, 0, 0, 0]
+        nq = [0, 0, 0, 0, 0, 0]
         coeff_nr = 0
         value = 0
         for nq[0] in range(self.order + 1):
@@ -117,58 +127,73 @@ class polynomials:
                             nq5_s = 0
                         else:
                             nq5_s = self.order - nq[0] - nq[1] - nq[2] - nq[3]
-                        for nq[4] in range(nq5_s + 1):                        
-                            if (derivComponent == 0):
-                                nqNonNegative = nq[0] - 1
-                                if (nqNonNegative < 0):
-                                    nqNonNegative = 0
-                                valueP = nq[0] * pow(x[0], nqNonNegative);
-                                for d in range(self.dimension):
-                                    if (d == derivComponent):
-                                        continue
-                                    valueP *= pow(x[d], nq[d])
-                                value += valueP * self.coefficients[coeff_nr]
-                            elif (derivComponent == 1):
-                                nqNonNegative = nq[1] - 1
-                                if (nqNonNegative < 0):
-                                    nqNonNegative = 0
-                                valueP = nq[1] * pow(x[1], nqNonNegative);
-                                for d in range(self.dimension):
-                                    if (d == derivComponent):
-                                        continue
-                                    valueP *= pow(x[d], nq[d])
-                                value += valueP * self.coefficients[coeff_nr]
-                            elif (derivComponent == 2):
-                                nqNonNegative = nq[2] - 1
-                                if (nqNonNegative < 0):
-                                    nqNonNegative = 0
-                                valueP = nq[2] * pow(x[2], nqNonNegative);
-                                for d in range(self.dimension):
-                                    if (d == derivComponent):
-                                        continue
-                                    valueP *= pow(x[d], nq[d])
-                                value += valueP * self.coefficients[coeff_nr]
-                            elif (derivComponent == 3):
-                                nqNonNegative = nq[3] - 1
-                                if (nqNonNegative < 0):
-                                    nqNonNegative = 0
-                                valueP = nq[3] * pow(x[3], nqNonNegative);
-                                for d in range(self.dimension):
-                                    if (d == derivComponent):
-                                        continue
-                                    valueP *= pow(x[d], nq[d])
-                                value += valueP * self.coefficients[coeff_nr]
-                            elif (derivComponent == 4):
-                                nqNonNegative = nq[4] - 1
-                                if (nqNonNegative < 0):
-                                    nqNonNegative = 0
-                                valueP = nq[4] * pow(x[4], nqNonNegative);
-                                for d in range(self.dimension):
-                                    if (d == derivComponent):
-                                        continue
-                                    valueP *= pow(x[d], nq[d])
-                                value += valueP * self.coefficients[coeff_nr]
-                            coeff_nr += 1                 
+                        for nq[4] in range(nq5_s + 1):
+                            if (self.dimension < 6):
+                                nq6_s = 0
+                            else:
+                                nq6_s = self.order - nq[0] - nq[1] - nq[2] - nq[3] - nq[4]
+                            for nq[5] in range(nq6_s + 1):                        
+                                if (derivComponent == 0):
+                                    nqNonNegative = nq[0] - 1
+                                    if (nqNonNegative < 0):
+                                        nqNonNegative = 0
+                                    valueP = nq[0] * pow(x[0], nqNonNegative)
+                                    for d in range(self.dimension):
+                                        if (d == derivComponent):
+                                            continue
+                                        valueP *= pow(x[d], nq[d])
+                                    value += valueP * self.coefficients[coeff_nr]
+                                elif (derivComponent == 1):
+                                    nqNonNegative = nq[1] - 1
+                                    if (nqNonNegative < 0):
+                                        nqNonNegative = 0
+                                    valueP = nq[1] * pow(x[1], nqNonNegative)
+                                    for d in range(self.dimension):
+                                        if (d == derivComponent):
+                                            continue
+                                        valueP *= pow(x[d], nq[d])
+                                    value += valueP * self.coefficients[coeff_nr]
+                                elif (derivComponent == 2):
+                                    nqNonNegative = nq[2] - 1
+                                    if (nqNonNegative < 0):
+                                        nqNonNegative = 0
+                                    valueP = nq[2] * pow(x[2], nqNonNegative)
+                                    for d in range(self.dimension):
+                                        if (d == derivComponent):
+                                            continue
+                                        valueP *= pow(x[d], nq[d])
+                                    value += valueP * self.coefficients[coeff_nr]
+                                elif (derivComponent == 3):
+                                    nqNonNegative = nq[3] - 1
+                                    if (nqNonNegative < 0):
+                                        nqNonNegative = 0
+                                    valueP = nq[3] * pow(x[3], nqNonNegative)
+                                    for d in range(self.dimension):
+                                        if (d == derivComponent):
+                                            continue
+                                        valueP *= pow(x[d], nq[d])
+                                    value += valueP * self.coefficients[coeff_nr]
+                                elif (derivComponent == 4):
+                                    nqNonNegative = nq[4] - 1
+                                    if (nqNonNegative < 0):
+                                        nqNonNegative = 0
+                                    valueP = nq[4] * pow(x[4], nqNonNegative)
+                                    for d in range(self.dimension):
+                                        if (d == derivComponent):
+                                            continue
+                                        valueP *= pow(x[d], nq[d])
+                                    value += valueP * self.coefficients[coeff_nr]
+                                elif (derivComponent == 5):
+                                    nqNonNegative = nq[5] - 1
+                                    if (nqNonNegative < 0):
+                                        nqNonNegative = 0
+                                    valueP = nq[5] * pow(x[5], nqNonNegative)
+                                    for d in range(self.dimension):
+                                        if (d == derivComponent):
+                                            continue
+                                        valueP *= pow(x[d], nq[d])
+                                    value += valueP * self.coefficients[coeff_nr]
+                                coeff_nr += 1                 
                                                 
         return value
         
@@ -179,7 +204,7 @@ class polynomial_estimation:
         self.dimension = dimension
         self.order = order
         
-        nq = [0, 0, 0, 0, 0]
+        nq = [0, 0, 0, 0, 0, 0]
         self.NCoeff = 0
         for nq[0] in range(order + 1):
             if (dimension < 2):
@@ -202,10 +227,15 @@ class polynomial_estimation:
                         else:
                             nq5_s = order - nq[0] - nq[1] - nq[2] - nq[3]
                         for nq[4] in range(nq5_s + 1):
-                            self.NCoeff += 1
+                            if (dimension < 6):
+                                nq6_s = 0
+                            else:
+                                nq6_s = order - nq[0] - nq[1] - nq[2] - nq[3] - nq[4]
+                            for nq[5] in range(nq6_s + 1):
+                                self.NCoeff += 1
                     
     def getVariables(self, x):        
-        nq = [0, 0, 0, 0, 0]
+        nq = [0, 0, 0, 0, 0, 0]
         coeff_nr = 0
         value = np.zeros((x.shape[0], self.NCoeff))
         for nq[0] in range(self.order + 1):
@@ -229,16 +259,21 @@ class polynomial_estimation:
                         else:
                             nq5_s = self.order - nq[0] - nq[1] - nq[2] - nq[3]
                         for nq[4] in range(nq5_s + 1):
-                            valueP = 1
-                            for d in range(self.dimension):
-                                valueP *= pow(x[:,d], nq[d])                            
-                            value[:,coeff_nr ] = valueP
-                            coeff_nr += 1
+                            if (self.dimension < 6):
+                                nq6_s = 0
+                            else:
+                                nq6_s = self.order - nq[0] - nq[1] - nq[2] - nq[3] - nq[4]
+                            for nq[5] in range(nq6_s + 1):
+                                valueP = 1
+                                for d in range(self.dimension):
+                                    valueP *= pow(x[:,d], nq[d])                            
+                                value[:,coeff_nr ] = valueP
+                                coeff_nr += 1
                         
         return value
     
     def getVariableDerivatives(self, x, derivComponent):
-        nq = [0, 0, 0, 0, 0]
+        nq = [0, 0, 0, 0, 0, 0]
         coeff_nr = 0
         value = np.zeros((x.shape[0], self.NCoeff))
         for nq[0] in range(self.order + 1):
@@ -262,57 +297,72 @@ class polynomial_estimation:
                         else:
                             nq5_s = self.order - nq[0] - nq[1] - nq[2] - nq[3]
                         for nq[4] in range(nq5_s + 1):
-                            if (derivComponent == 0):
-                                nqNonNegative = nq[0] - 1
-                                if (nqNonNegative < 0):
-                                    nqNonNegative = 0
-                                valueP = nq[0] * pow(x[:,0], nqNonNegative);
-                                for d in range(self.dimension):
-                                    if (d == derivComponent):
-                                        continue
-                                    valueP *= pow(x[:,d], nq[d])
-                                value[:,coeff_nr ] = valueP
-                            elif (derivComponent == 1):
-                                nqNonNegative = nq[1] - 1
-                                if (nqNonNegative < 0):
-                                    nqNonNegative = 0
-                                valueP = nq[1] * pow(x[:,1], nqNonNegative);
-                                for d in range(self.dimension):
-                                    if (d == derivComponent):
-                                        continue
-                                    valueP *= pow(x[:,d], nq[d])
-                                value[:,coeff_nr ] = valueP
-                            elif (derivComponent == 2):
-                                nqNonNegative = nq[2] - 1
-                                if (nqNonNegative < 0):
-                                    nqNonNegative = 0
-                                valueP = nq[2] * pow(x[:,2], nqNonNegative);
-                                for d in range(self.dimension):
-                                    if (d == derivComponent):
-                                        continue
-                                    valueP *= pow(x[:,d], nq[d])
-                                value[:,coeff_nr ] = valueP
-                            elif (derivComponent == 3):
-                                nqNonNegative = nq[3] - 1
-                                if (nqNonNegative < 0):
-                                    nqNonNegative = 0
-                                valueP = nq[3] * pow(x[:,3], nqNonNegative);
-                                for d in range(self.dimension):
-                                    if (d == derivComponent):
-                                        continue
-                                    valueP *= pow(x[:,d], nq[d])
-                                value[:,coeff_nr ] = valueP
-                            elif (derivComponent == 4):
-                                nqNonNegative = nq[4] - 1
-                                if (nqNonNegative < 0):
-                                    nqNonNegative = 0
-                                valueP = nq[4] * pow(x[:,4], nqNonNegative);
-                                for d in range(self.dimension):
-                                    if (d == derivComponent):
-                                        continue
-                                    valueP *= pow(x[:,d], nq[d])
-                                value[:,coeff_nr ] = valueP
-                            coeff_nr += 1                 
+                            if (self.dimension < 6):
+                                nq6_s = 0
+                            else:
+                                nq6_s = self.order - nq[0] - nq[1] - nq[2] - nq[3] - nq[4]                        
+                            for nq[5] in range(nq6_s + 1):
+                                if (derivComponent == 0):
+                                    nqNonNegative = nq[0] - 1
+                                    if (nqNonNegative < 0):
+                                        nqNonNegative = 0
+                                    valueP = nq[0] * pow(x[:,0], nqNonNegative)
+                                    for d in range(self.dimension):
+                                        if (d == derivComponent):
+                                            continue
+                                        valueP *= pow(x[:,d], nq[d])
+                                    value[:,coeff_nr ] = valueP
+                                elif (derivComponent == 1):
+                                    nqNonNegative = nq[1] - 1
+                                    if (nqNonNegative < 0):
+                                        nqNonNegative = 0
+                                    valueP = nq[1] * pow(x[:,1], nqNonNegative)
+                                    for d in range(self.dimension):
+                                        if (d == derivComponent):
+                                            continue
+                                        valueP *= pow(x[:,d], nq[d])
+                                    value[:,coeff_nr ] = valueP
+                                elif (derivComponent == 2):
+                                    nqNonNegative = nq[2] - 1
+                                    if (nqNonNegative < 0):
+                                        nqNonNegative = 0
+                                    valueP = nq[2] * pow(x[:,2], nqNonNegative)
+                                    for d in range(self.dimension):
+                                        if (d == derivComponent):
+                                            continue
+                                        valueP *= pow(x[:,d], nq[d])
+                                    value[:,coeff_nr ] = valueP
+                                elif (derivComponent == 3):
+                                    nqNonNegative = nq[3] - 1
+                                    if (nqNonNegative < 0):
+                                        nqNonNegative = 0
+                                    valueP = nq[3] * pow(x[:,3], nqNonNegative)
+                                    for d in range(self.dimension):
+                                        if (d == derivComponent):
+                                            continue
+                                        valueP *= pow(x[:,d], nq[d])
+                                    value[:,coeff_nr ] = valueP
+                                elif (derivComponent == 4):
+                                    nqNonNegative = nq[4] - 1
+                                    if (nqNonNegative < 0):
+                                        nqNonNegative = 0
+                                    valueP = nq[4] * pow(x[:,4], nqNonNegative)
+                                    for d in range(self.dimension):
+                                        if (d == derivComponent):
+                                            continue
+                                        valueP *= pow(x[:,d], nq[d])
+                                    value[:,coeff_nr ] = valueP
+                                elif (derivComponent == 5):
+                                    nqNonNegative = nq[5] - 1
+                                    if (nqNonNegative < 0):
+                                        nqNonNegative = 0
+                                    valueP = nq[5] * pow(x[:,5], nqNonNegative)
+                                    for d in range(self.dimension):
+                                        if (d == derivComponent):
+                                            continue
+                                        valueP *= pow(x[:,d], nq[d])
+                                    value[:,coeff_nr ] = valueP
+                                coeff_nr += 1                 
                                                 
         return value
         

@@ -2,6 +2,7 @@ __pycache__
 .env
 *.log
 *.ipynb_checkpoints
+*.vscode
 Data/*
 **/Data/
 

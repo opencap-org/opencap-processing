@@ -43,6 +43,8 @@ from utilsProcessing import (segment_squats, segment_STS, adjust_muscle_wrapping
                              generate_model_with_contacts)
 from settingsOpenSimAD import get_setup
 
+from squat_analysis import squat_analysis
+
 # %% Filter numpy array.
 def filterNumpyArray(array, time, cutoff_frequency=6, order=4):
     
@@ -738,11 +740,11 @@ def generateExternalFunction(
                     rot1_f_obj = opensim.LinearFunction.safeDownCast(rot1_f)                          
                     rot1_f_slope = rot1_f_obj.getSlope()
                     rot1_f_intercept = rot1_f_obj.getIntercept()                
-                    c_coord = c_joint.get_coordinates(coord)
-                    c_coord_name = c_coord.getName()
+                    c_coord_name = rot1.get_coordinates(0)
                     f.write('\tst_%s[%i].setCoordinateNames(OpenSim::Array<std::string>(\"%s\", 1, 1));\n' % (c_joint.getName(), coord, c_coord_name))
                     f.write('\tst_%s[%i].setFunction(new LinearFunction(%.4f, %.4f));\n' % (c_joint.getName(), coord, rot1_f_slope, rot1_f_intercept))                
                 elif rot1_f.getConcreteClassName() == 'PolynomialFunction':
+                    c_coord_name = rot1.get_coordinates(0)
                     f.write('\tst_%s[%i].setCoordinateNames(OpenSim::Array<std::string>(\"%s\", 1, 1));\n' % (c_joint.getName(), coord, c_coord_name))
                     rot1_f_obj = opensim.PolynomialFunction.safeDownCast(rot1_f)                
                     rot1_f_coeffs = rot1_f_obj.getCoefficients().to_numpy()
@@ -806,11 +808,11 @@ def generateExternalFunction(
                     rot2_f_obj = opensim.LinearFunction.safeDownCast(rot2_f)
                     rot2_f_slope = rot2_f_obj.getSlope()
                     rot2_f_intercept = rot2_f_obj.getIntercept()                
-                    c_coord = c_joint.get_coordinates(coord)
-                    c_coord_name = c_coord.getName()
+                    c_coord_name = rot2.get_coordinates(0)
                     f.write('\tst_%s[%i].setCoordinateNames(OpenSim::Array<std::string>(\"%s\", 1, 1));\n' % (c_joint.getName(), coord, c_coord_name))
                     f.write('\tst_%s[%i].setFunction(new LinearFunction(%.4f, %.4f));\n' % (c_joint.getName(), coord, rot2_f_slope, rot2_f_intercept))
                 elif rot2_f.getConcreteClassName() == 'PolynomialFunction':
+                    c_coord_name = rot2.get_coordinates(0)
                     f.write('\tst_%s[%i].setCoordinateNames(OpenSim::Array<std::string>(\"%s\", 1, 1));\n' % (c_joint.getName(), coord, c_coord_name))
                     rot2_f_obj = opensim.PolynomialFunction.safeDownCast(rot2_f)                
                     rot2_f_coeffs = rot2_f_obj.getCoefficients().to_numpy()
@@ -874,11 +876,11 @@ def generateExternalFunction(
                     rot3_f_obj = opensim.LinearFunction.safeDownCast(rot3_f)
                     rot3_f_slope = rot3_f_obj.getSlope()
                     rot3_f_intercept = rot3_f_obj.getIntercept()                
-                    c_coord = c_joint.get_coordinates(coord)
-                    c_coord_name = c_coord.getName()
+                    c_coord_name = rot3.get_coordinates(0)
                     f.write('\tst_%s[%i].setCoordinateNames(OpenSim::Array<std::string>(\"%s\", 1, 1));\n' % (c_joint.getName(), coord, c_coord_name))
                     f.write('\tst_%s[%i].setFunction(new LinearFunction(%.4f, %.4f));\n' % (c_joint.getName(), coord, rot3_f_slope, rot3_f_intercept))
                 elif rot3_f.getConcreteClassName() == 'PolynomialFunction':
+                    c_coord_name = rot3.get_coordinates(0)
                     f.write('\tst_%s[%i].setCoordinateNames(OpenSim::Array<std::string>(\"%s\", 1, 1));\n' % (c_joint.getName(), coord, c_coord_name))
                     rot3_f_obj = opensim.PolynomialFunction.safeDownCast(rot3_f)                
                     rot3_f_coeffs = rot3_f_obj.getCoefficients().to_numpy()
@@ -941,16 +943,16 @@ def generateExternalFunction(
                 if tr1_f.getConcreteClassName() == 'LinearFunction':    
                     tr1_f_obj = opensim.LinearFunction.safeDownCast(tr1_f)
                     tr1_f_slope = tr1_f_obj.getSlope()
-                    tr1_f_intercept = tr1_f_obj.getIntercept()                
-                    c_coord = c_joint.get_coordinates(coord)
-                    c_coord_name = c_coord.getName()
+                    tr1_f_intercept = tr1_f_obj.getIntercept()
+                    c_coord_name = tr1.get_coordinates(0)
                     f.write('\tst_%s[%i].setCoordinateNames(OpenSim::Array<std::string>(\"%s\", 1, 1));\n' % (c_joint.getName(), coord, c_coord_name))
                     f.write('\tst_%s[%i].setFunction(new LinearFunction(%.4f, %.4f));\n' % (c_joint.getName(), coord, tr1_f_slope, tr1_f_intercept))
                 elif tr1_f.getConcreteClassName() == 'PolynomialFunction':
+                    c_coord_name = tr1.get_coordinates(0)
                     f.write('\tst_%s[%i].setCoordinateNames(OpenSim::Array<std::string>(\"%s\", 1, 1));\n' % (c_joint.getName(), coord, c_coord_name))
                     tr1_f_obj = opensim.PolynomialFunction.safeDownCast(tr1_f)                
                     tr1_f_coeffs = tr1_f_obj.getCoefficients().to_numpy()
-                    c_nCoeffs = tr1_f_coeffs.shape[0]                
+                    c_nCoeffs = tr1_f_coeffs.shape[0]
                     if c_nCoeffs == 2:
                         f.write('\tosim_double_adouble st_%s_%i_coeffs[%i] = {%.20f, %.20f}; \n' % (c_joint.getName(), coord, c_nCoeffs, tr1_f_coeffs[0], tr1_f_coeffs[1]))
                     elif c_nCoeffs == 3:
@@ -1010,11 +1012,11 @@ def generateExternalFunction(
                     tr2_f_obj = opensim.LinearFunction.safeDownCast(tr2_f)
                     tr2_f_slope = tr2_f_obj.getSlope()
                     tr2_f_intercept = tr2_f_obj.getIntercept()                
-                    c_coord = c_joint.get_coordinates(coord)
-                    c_coord_name = c_coord.getName()
+                    c_coord_name = tr2.get_coordinates(0)
                     f.write('\tst_%s[%i].setCoordinateNames(OpenSim::Array<std::string>(\"%s\", 1, 1));\n' % (c_joint.getName(), coord, c_coord_name))
                     f.write('\tst_%s[%i].setFunction(new LinearFunction(%.4f, %.4f));\n' % (c_joint.getName(), coord, tr2_f_slope, tr2_f_intercept))
                 elif tr2_f.getConcreteClassName() == 'PolynomialFunction':
+                    c_coord_name = tr2.get_coordinates(0)
                     f.write('\tst_%s[%i].setCoordinateNames(OpenSim::Array<std::string>(\"%s\", 1, 1));\n' % (c_joint.getName(), coord, c_coord_name))
                     tr2_f_obj = opensim.PolynomialFunction.safeDownCast(tr2_f)                
                     tr2_f_coeffs = tr2_f_obj.getCoefficients().to_numpy()
@@ -1078,11 +1080,11 @@ def generateExternalFunction(
                     tr3_f_obj = opensim.LinearFunction.safeDownCast(tr3_f)
                     tr3_f_slope = tr3_f_obj.getSlope()
                     tr3_f_intercept = tr3_f_obj.getIntercept()                
-                    c_coord = c_joint.get_coordinates(coord)
-                    c_coord_name = c_coord.getName()
+                    c_coord_name = tr3.get_coordinates(0)
                     f.write('\tst_%s[%i].setCoordinateNames(OpenSim::Array<std::string>(\"%s\", 1, 1));\n' % (c_joint.getName(), coord, c_coord_name))
                     f.write('\tst_%s[%i].setFunction(new LinearFunction(%.4f, %.4f));\n' % (c_joint.getName(), coord, tr3_f_slope, tr3_f_intercept))
                 elif tr3_f.getConcreteClassName() == 'PolynomialFunction':
+                    c_coord_name = tr3.get_coordinates(0)
                     f.write('\tst_%s[%i].setCoordinateNames(OpenSim::Array<std::string>(\"%s\", 1, 1));\n' % (c_joint.getName(), coord, c_coord_name))
                     tr3_f_obj = opensim.PolynomialFunction.safeDownCast(tr3_f)                
                     tr3_f_coeffs = tr3_f_obj.getCoefficients().to_numpy()
@@ -2341,12 +2343,19 @@ def processInputsOpenSimAD(baseDir, dataFolder, session_id, trial_name,
     pathMotionFile = os.path.join(sessionFolder, 'OpenSimData', 'Kinematics',
                                   trial_name + '.mot')
     if (repetition is not None and 
-        (motion_type == 'squats' or motion_type == 'sit_to_stand')): 
-        if motion_type == 'squats':
-            times_window = segment_squats(pathMotionFile, visualize=True)
-        elif motion_type == 'sit_to_stand':
+        ('squats' in motion_type or 'sit_to_stand' in motion_type)): 
+        if 'squats' in motion_type:           
+            sessionDir = os.path.join(dataFolder, session_id)
+            squat = squat_analysis(
+                sessionDir, trial_name,
+                lowpass_cutoff_frequency_for_coordinate_values=4,
+                n_repetitions=-1)
+            squat_events = squat.get_squat_events()            
+            times_window = [list(row) for row in squat_events['eventTimes']]
+        elif 'sit_to_stand' in motion_type:
             _, _, times_window = segment_STS(pathMotionFile, visualize=True)
         time_window = times_window[repetition]
+        time_window = [x.item() for x in time_window]
         settings['repetition'] = repetition
     else:
         motion_file = storage_to_numpy(pathMotionFile)

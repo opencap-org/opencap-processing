@@ -52,6 +52,7 @@ def segment_gait(session_id, trial_name, data_folder, gait_cycles_from_end=0):
     return heelstrikeTimes, gait
 
 # %% Segment squats.
+# DEPRACTED: use squat_analysis instead.
 def segment_squats(ikFilePath, pelvis_ty=None, timeVec=None, visualize=False,
                   filter_pelvis_ty=True, cutoff_frequency=4, height=.2):
     

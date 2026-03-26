@@ -31,6 +31,7 @@ import yaml
 import scipy.interpolate as interpolate
 import platform
 import copy
+import opensim
 import pandas as pd
 
 # %% Settings.
@@ -74,6 +75,10 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
     coordinate_optimal_forces = {}
     if "withArms" in settings:
          withArms = settings['withArms']
+
+    withKA = False
+    if "withKA" in settings:
+        withKA = settings['withKA']
     
     # Set withLumbarCoordinateActuators to True to actuate the lumbar 
     # coordinates with coordinate actuators. Coordinate actuator have simple
@@ -375,7 +380,7 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
     pathSettings = os.path.join(pathResults, 'Setup_{}.yaml'.format(case))
     # Dump settings in yaml file.
     with open(pathSettings, 'w') as file:
-        yaml.dump(settings, file)
+        yaml.dump(settings, file, default_flow_style=False)
     
     # %% Muscles.
     # This section specifies the muscles and some of their parameters. This is
@@ -490,6 +495,21 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
     if not withMTP:
         for joint in mtpJoints:
             joints.remove(joint)
+    # Knee adduction coordinates.
+    model = opensim.Model(pathModelFile)
+    coordinateSet = model.getCoordinateSet()
+    coordinateNames = []
+    for coord in range(coordinateSet.getSize()):
+        coordinateNames.append(coordinateSet.get(coord).getName())
+    kneeAdductionJoints = ['knee_adduction_r', 'knee_adduction_l']
+    if all(x in coordinateNames for x in kneeAdductionJoints):
+        idx_knee_angle_r = joints.index('knee_angle_r')        
+        joints.insert(idx_knee_angle_r+1, 'knee_adduction_r')
+        idx_knee_angle_l = joints.index('knee_angle_l')
+        joints.insert(idx_knee_angle_l+1, 'knee_adduction_l')
+        withKA = True
+    elif any(x in coordinateNames for x in kneeAdductionJoints):
+        raise ValueError('We found a knee adduction coordinate in the model, but only on one side. Please verify the model and the coordinate names.')
     # Lower-limb coordinates.
     lowerLimbJoints = copy.deepcopy(joints)
     # Arm coordinates.
@@ -706,8 +726,12 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
     
     # Paths
     pathGenericTemplates = os.path.join(baseDir, "OpenSimPipeline")
-    pathDummyMotion = os.path.join(pathGenericTemplates, "MuscleAnalysis", 
-                                   'DummyMotion.mot')
+    if withKA:
+        pathDummyMotion = os.path.join(pathGenericTemplates, "MuscleAnalysis", 
+                                    'DummyMotion_KA.mot')
+    else:
+        pathDummyMotion = os.path.join(pathGenericTemplates, "MuscleAnalysis", 
+                                    'DummyMotion.mot')
     
     # These are the ranges of motion used to fit the polynomial coefficients.
     # We do not want the experimental data to be out of these ranges. If they
@@ -723,8 +747,8 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
         'hip_rotation_r': {'max': 35, 'min': -40},
         'knee_angle_l': {'max': 138, 'min': 0},
         'knee_angle_r': {'max': 138, 'min': 0},
-        'knee_adduction_l': {'max': 20, 'min': -30},
-        'knee_adduction_r': {'max': 20, 'min': -30},
+        'knee_adduction_l': {'max': 30, 'min': -30},
+        'knee_adduction_r': {'max': 30, 'min': -30},
         'ankle_angle_l': {'max': 50, 'min': -50},
         'ankle_angle_r': {'max': 50, 'min': -50},
         'subtalar_angle_l': {'max': 35, 'min': -35},
@@ -740,8 +764,8 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
         'hip_rotation_r': {'max': 40, 'min': -40},
         'knee_angle_l': {'max': 140, 'min': 0},
         'knee_angle_r': {'max': 140, 'min': 0},
-        'knee_adduction_l': {'max': 20, 'min': -30},
-        'knee_adduction_r': {'max': 20, 'min': -30},
+        'knee_adduction_l': {'max': 30, 'min': -30},
+        'knee_adduction_r': {'max': 30, 'min': -30},
         'ankle_angle_l': {'max': 50, 'min': -50},
         'ankle_angle_r': {'max': 50, 'min': -50},
         'subtalar_angle_l': {'max': 35, 'min': -35},
@@ -767,13 +791,16 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
     from functionCasADiOpenSimAD import polynomialApproximation
     leftPolynomialJoints = [
         'hip_flexion_l', 'hip_adduction_l', 'hip_rotation_l', 'knee_angle_l',
-        'ankle_angle_l', 'subtalar_angle_l', 'mtp_angle_l'] 
+        'knee_adduction_l', 'ankle_angle_l', 'subtalar_angle_l', 'mtp_angle_l'] 
     rightPolynomialJoints = [
         'hip_flexion_r', 'hip_adduction_r', 'hip_rotation_r', 'knee_angle_r',
-        'ankle_angle_r', 'subtalar_angle_r', 'mtp_angle_r']
+        'knee_adduction_r', 'ankle_angle_r', 'subtalar_angle_r', 'mtp_angle_r']
     if not withMTP:
         leftPolynomialJoints.remove('mtp_angle_l')
-        rightPolynomialJoints.remove('mtp_angle_r')    
+        rightPolynomialJoints.remove('mtp_angle_r')
+    if not withKA:
+        leftPolynomialJoints.remove('knee_adduction_l')
+        rightPolynomialJoints.remove('knee_adduction_r')        
     
     if not torque_driven_model:
         # Load polynomials if computed already, compute otherwise.    
@@ -1545,7 +1572,8 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
                 dMk = {}
                 # Left side.
                 for joint in leftPolynomialJoints:
-                    if ((joint != 'mtp_angle_l') and 
+                    if ((joint != 'mtp_angle_l') and
+                        (joint != 'knee_adduction_l') and
                         (joint != 'lumbar_extension') and
                         (joint != 'lumbar_bending') and 
                         (joint != 'lumbar_rotation')):
@@ -1555,6 +1583,7 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
                 # Right side.
                 for joint in rightPolynomialJoints:
                     if ((joint != 'mtp_angle_r') and 
+                        (joint != 'knee_adduction_r') and
                         (joint != 'lumbar_extension') and
                         (joint != 'lumbar_bending') and 
                         (joint != 'lumbar_rotation')):

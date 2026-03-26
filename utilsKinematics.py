@@ -104,7 +104,7 @@ class kinematics:
         motionPath = os.path.join(sessionDir, 'OpenSimData', 'Kinematics',
                                   '{}.mot'.format(trialName))
         
-        # Create time-series table with coordinate values.             
+        # Create time-series table with coordinate values.
         self.table = opensim.TimeSeriesTable(motionPath)        
         tableProcessor = opensim.TableProcessor(self.table)
         self.columnLabels = list(self.table.getColumnLabels())
@@ -144,7 +144,7 @@ class kinematics:
             self.Qds[:,i] = splineD1(self.time)
             # Coordinate accelerations.
             splineD2 = spline.derivative(n=2)
-            self.Qdds[:,i] = splineD2(self.time)            
+            self.Qdds[:,i] = splineD2(self.time)
             # Add coordinate speeds to table.
             columnLabel_speed = columnLabel[:-5] + 'speed'
             self.table.appendColumn(
@@ -160,14 +160,14 @@ class kinematics:
         existingLabels = self.table.getColumnLabels()
         for stateVariableNameStr in stateVariableNamesStr:
             if not stateVariableNameStr in existingLabels:
-                vec_0 = opensim.Vector([0] * self.table.getNumRows())            
+                vec_0 = opensim.Vector([0] * self.table.getNumRows())     
                 self.table.appendColumn(stateVariableNameStr, vec_0)
                        
         # Number of muscles.
         self.nMuscles = 0
         self.forceSet = self.model.getForceSet()
         for i in range(self.forceSet.getSize()):        
-            c_force_elt = self.forceSet.get(i)  
+            c_force_elt = self.forceSet.get(i)
             if 'Muscle' in c_force_elt.getConcreteClassName():
                 self.nMuscles += 1
                 
@@ -239,6 +239,33 @@ class kinematics:
                 for marker_name, data in markerDict['markers'].items()}
         
         return markerDict
+    
+    def get_body_transform_dict(self):
+    
+        states_traj = self.stateTrajectory()
+        states_table = states_traj.exportToTable(self.model)
+    
+        body_dict = {}
+        body_dict['time'] = np.array(states_table.getIndependentColumn())
+        
+        body_list = []
+        body_transforms_dict = {}
+        for body in self.model.getBodySet():
+            body_list.append(body.getName())
+            body_transforms_dict[body.getName()] = []
+        body_dict['body_names'] = body_list
+            
+        for i in range(self.table.getNumRows()):
+            this_state = states_traj[i]
+            self.model.realizePosition(this_state)
+            
+            for body in self.model.getBodySet():
+                this_body_transform = body.getTransformInGround(this_state)
+                body_transforms_dict[body.getName()].append(this_body_transform)
+        
+        body_dict['body_transforms'] = body_transforms_dict
+        
+        return body_dict
     
     def rotate_marker_dict(self, markerDict, euler_angles):
         # euler_angles is a dictionary with keys being the axes of rotation
