@@ -75,7 +75,7 @@ def computeKAM(pathGenericTemplates, outputDir, modelPath, IDPath, IKPath,
         pController.setName(coord.getName() + '_controller') 
         pController.addActuator(newActuator)
         # Attach the function to the controller.
-        pController.prescribeControlForActuator(newActuator.getName(),constFxn)
+        pController.prescribeControlForActuator(0,constFxn)
         model.addController(pController) 
         
     # Get controler set.
@@ -373,7 +373,7 @@ def computeMCF(pathGenericTemplates, outputDir, modelPath, activationsPath,
                 pController.setName(coordName + '_controller') 
                 pController.addActuator(newActuator) 
                 # Attach the function to the controller.
-                pController.prescribeControlForActuator(newActuator.getName(),constFxn)
+                pController.prescribeControlForActuator(0,constFxn)
                 model.addController(pController) 
             
         controllerSet = model.getControllerSet()
