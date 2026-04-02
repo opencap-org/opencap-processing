@@ -503,49 +503,69 @@ class kinematics:
         
         return com_accelerations 
 
-    def get_body_angular_velocity(self, body_names=None, lowpass_cutoff_frequency=-1,
-                                  expressed_in='body'):
-        
+    def get_body_orientation(self, body_names=None, lowpass_cutoff_frequency=-1,
+                           expressed_in='body'):
         body_set = self.model.getBodySet()
         if body_names is None:
             body_names = []
             for i in range(body_set.getSize()):
-                print(i)
                 body = body_set.get(i)
                 body_names.append(body.getName())
-        
-        bodies = [body_set.get(body_name) for body_name in body_names]           
+
+        bodies = [body_set.get(body_name) for body_name in body_names]
         ground = self.model.getGround()
 
-        angular_velocity = np.ndarray((self.table.getNumRows(),
-                              len(body_names)*3)) # time x bodies x dim
-                        
-        for i_time in range(self.table.getNumRows()): # loop over time
+        angular_position = np.ndarray((self.table.getNumRows(),
+                              len(body_names)*3))
+
+        # Body orientation using atan2
+        for i_time in range(self.table.getNumRows()):  # Loop over time
             state = self.stateTrajectory()[i_time]
-            self.model.realizeVelocity(state)
-            
-            
-            for i_body,body in enumerate(bodies):
-                ang_vel_in_ground = body.getAngularVelocityInGround(state)
+            self.model.realizePosition(state)
+
+            for i_body, body in enumerate(bodies):
+                R = body.getTransformInGround(state).R()  # Get rotation matrix
+                roll = np.arctan2(R.get(2, 1), R.get(2, 2))  # atan2(R21, R22)
+                pitch = np.arctan2(-R.get(2, 0),
+                                   np.sqrt(R.get(2, 1) ** 2 + R.get(2, 2) ** 2))  # atan2(-R20, sqrt(R21^2 + R22^2))
+                yaw = np.arctan2(R.get(1, 0), R.get(0, 0))  # atan2(R10, R00)
+
                 if expressed_in == 'body':
-                    angular_velocity[i_time, i_body*3:i_body*3+3] = ground.expressVectorInAnotherFrame(
-                                                          state, ang_vel_in_ground, body
-                                                          ).to_numpy()
+                    angular_position[i_time, i_body * 3:i_body * 3 + 3] = ground.expressVectorInAnotherFrame(
+                        state, opensim.osim.Vec3(roll, pitch, yaw), body
+                    ).to_numpy()
                 elif expressed_in == 'ground':
-                    angular_velocity[i_time, i_body*3:i_body*3+3] = ang_vel_in_ground.to_numpy()
+                    angular_position[i_time, i_body * 3:i_body * 3 + 3] = np.array([roll, pitch, yaw])
                 else:
-                    raise Exception (expressed_in + ' is not a valid frame to express angular' + 
-                                     ' velocity.')
-                    
-        angular_velocity_filtered = lowPassFilter(self.time, angular_velocity, lowpass_cutoff_frequency)
-        
+                    raise Exception(f"{expressed_in} is not a valid frame to express angular position.")
+
+        if lowpass_cutoff_frequency > 0:
+            angular_position_filtered = lowPassFilter(self.time, angular_position, lowpass_cutoff_frequency)
+        else:
+            angular_position_filtered = angular_position
+
         # Put into a dataframe
-        data = np.concatenate((np.expand_dims(self.time, axis=1), angular_velocity_filtered), axis=1)
+        data = np.concatenate((np.expand_dims(self.time, axis=1), angular_position_filtered), axis=1)
         columns = ['time']
         for i, body_name in enumerate(body_names):
             columns += [f'{body_name}_x', f'{body_name}_y', f'{body_name}_z']
-        angular_velocity_df = pd.DataFrame(data=data, columns=columns)
-                                                                                                
+        angular_position_df = pd.DataFrame(data=data, columns=columns)
+
+        return angular_position_df
+
+    def get_body_angular_velocity(self, body_names=None, lowpass_cutoff_frequency=-1, expressed_in='body'):
+        angular_position_df = self.get_body_orientation(body_names=body_names, lowpass_cutoff_frequency=lowpass_cutoff_frequency, expressed_in=expressed_in)
+
+        time = angular_position_df['time'].to_numpy()
+        angular_position = angular_position_df.iloc[:, 1:].to_numpy()  # Exclude time column
+
+        dt = np.diff(time)[:, None]  # Time step differences, shape (N-1, 1)
+        angular_velocity = np.diff(angular_position, axis=0) / dt
+        angular_velocity = np.vstack((np.zeros((1, angular_velocity.shape[1])), angular_velocity))
+
+        # Filtering commented out since angular_position includes filtering
+        angular_velocity_df = pd.DataFrame(data=np.column_stack((time, angular_velocity)),columns=angular_position_df.columns)
+
         return angular_velocity_df
 
     def get_ranges_of_motion(self, in_degrees=True, lowpass_cutoff_frequency=-1):

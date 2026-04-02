@@ -2200,6 +2200,7 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
             numpy_to_storage(labels, data, os.path.join(
                 pathResults, 'kinetics_{}_{}.mot'.format(trialName, case)),
                 datatype='ID')
+            torque_labels = labels[1:]
             # Grounds reaction forces (per sphere).
             labels = ['time']                    
             data = np.zeros((tgridf.T[:-1].shape[0], 1+nContactSpheres*9))
@@ -2702,7 +2703,8 @@ def run_tracking(baseDir, dataDir, subject, settings, case='0',
             'muscles': bothSidesMuscles,
             'passive_limit_torques': pT_opt,
             'muscle_driven_joints': muscleDrivenJoints,
-            'limit_torques_joints': passiveTorqueJoints}             
+            'limit_torques_joints': passiveTorqueJoints,
+            'torque_labels': torque_labels}
         if computeKAM:
             optimaltrajectories[case]['KAM'] = KAM
             optimaltrajectories[case]['KAM_BWht'] = KAM_BWht

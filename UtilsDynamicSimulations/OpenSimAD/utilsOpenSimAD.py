@@ -2345,7 +2345,7 @@ def processInputsOpenSimAD(baseDir, dataFolder, session_id, trial_name,
         if motion_type == 'squats':
             times_window = segment_squats(pathMotionFile, visualize=True)
         elif motion_type == 'sit_to_stand':
-            _, _, times_window = segment_STS(pathMotionFile, visualize=True)
+            times_window, _ = segment_STS(session_id, trial_name, dataFolder)
         time_window = times_window[repetition]
         settings['repetition'] = repetition
     else:
