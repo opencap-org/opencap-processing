@@ -1,6 +1,6 @@
 """
     ---------------------------------------------------------------------------
-    OpenCap processing: gaitAnalysis.py
+    OpenCap processing: gait_analysis.py
     ---------------------------------------------------------------------------
 
     Copyright 2023 Stanford University and the Authors
