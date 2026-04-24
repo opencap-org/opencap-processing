@@ -126,10 +126,12 @@ class kinematics:
         
         # Trim if filtered.
         if lowpass_cutoff_frequency_for_coordinate_values > 0:
-            time_temp = self.table.getIndependentColumn()            
+            time_temp = self.table.getIndependentColumn()
+            t_start = max(self.time[0], time_temp[0])
+            t_end = min(self.time[-1], time_temp[-1])
             self.table.trim(
-                time_temp[self.table.getNearestRowIndexForTime(self.time[0])],
-                time_temp[self.table.getNearestRowIndexForTime(self.time[-1])])
+                time_temp[self.table.getNearestRowIndexForTime(t_start)],
+                time_temp[self.table.getNearestRowIndexForTime(t_end)])
                 
         # Compute coordinate speeds and accelerations and add speeds to table.        
         self.Qs = self.table.getMatrix().to_numpy()
